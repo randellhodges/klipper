@@ -152,9 +152,23 @@ class GCodeDispatch:
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*/])')
     def _process_commands(self, commands, need_ack=True):
+
+        line_handlers = self.event_handlers.get("klippy:process_command_line", [])
+
         for line in commands:
             # Ignore comments and leading/trailing spaces
             line = origline = line.strip()
+
+            # Send the line out th any listeners. If anyone returns False
+            # we'll ignore the line
+            ignore_line = False
+            for line_callback in line_handlers:
+                ignore_line = line_callback(line)
+                if ignore_line:
+                    break
+            if ignore_line:
+                break
+
             cpos = line.find(';')
             if cpos >= 0:
                 line = line[:cpos]

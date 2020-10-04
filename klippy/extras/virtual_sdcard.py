@@ -159,6 +159,16 @@ class VirtualSD:
             raise gcmd.error("Unable to open file")
         gcmd.respond_raw("File opened:%s Size:%d" % (filename, fsize))
         gcmd.respond_raw("File selected")
+
+        # If we have any handlers, we'll loop thru each line and let the handlers
+        # do whatever they need with the line.
+        line_handlers = self.event_handlers.get("klippy:file_line_read", [])
+        if len(line_handlers):
+            for line in f:
+                for line_handler in line_handlers:
+                    line_handlers(line)
+            f.seek(0)
+
         self.current_file = f
         self.file_position = 0
         self.file_size = fsize
